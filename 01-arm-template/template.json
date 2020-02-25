@@ -60,10 +60,6 @@
         "storageEndpoint": {
             "type": "Object",
             "value": "[reference(variables('name')).primaryEndpoints]"
-        },
-        "StorageName": {
-            "type": "Object",
-            "value": "[reference(variables('name'))]"
-        }
+        }    
     }
 }
