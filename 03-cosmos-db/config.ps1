@@ -1,6 +1,6 @@
 $resourceGroupName = "cosmosdb"
 $location = "westus"
-$accountName= "laaz203cosmosdb"
+$accountName= "leo203cosmosdb"
 $databaseName = "myDatabase"
 
 az group create `
@@ -12,7 +12,7 @@ az cosmosdb create `
  -g $resourceGroupName `
  --name $accountName `
  --kind GlobalDocumentDB `
- --locations "West US=0" "North Central US=1" `
+ --locations regionName=westus failoverPriority=0 isZoneRedundant=False --locations regionName=eastus2 failoverPriority=1 isZoneRedundant=True `
  --default-consistency-level Strong `
  --enable-multiple-write-locations true `
  --enable-automatic-failover true
@@ -24,13 +24,14 @@ az cosmosdb database create `
  --db-name $databaseName
 
 # List account keys
-az cosmosdb list-keys `
+az cosmosdb keys list `
  --name $accountName `
  -g $resourceGroupName
 
 # List account connection strings
-az cosmosdb list-connection-strings `
+az cosmosdb keys list `
  --name $accountName `
+ --type connection-strings `
  -g $resourceGroupName
 
 az cosmosdb show `

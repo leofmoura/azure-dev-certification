@@ -28,7 +28,7 @@ az batch account login `
 az batch pool create `
  --id $poolName `
  --vm-size Standard_A1_v2 `
- --target-dedicated-nodes 2 `
+ --target-dedicated-nodes 1 `
  --image `
    canonical:ubuntuserver:16.04-LTS `
  --node-agent-sku-id `

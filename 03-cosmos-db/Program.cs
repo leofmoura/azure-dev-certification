@@ -8,18 +8,18 @@ using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Collections.ObjectModel; 
+using System.Collections.ObjectModel;
 
 namespace linuxacademy.az203.storage.cosmosdb
-{ 
+{
     class Program
     {
         private static DocumentClient _client;
         private const string _databaseId = "myDatabase";
         private const string _collectionId = "Families";
-        private const string _endpoint = 
-            "";
-        private const string _key = 
+        private const string _endpoint =
+            "https://leo203cosmosdb.documents.azure.com:443/";
+        private const string _key =
             "";
 
         static void Main(string[] args)
@@ -35,14 +35,16 @@ namespace linuxacademy.az203.storage.cosmosdb
                 new Database { Id = _databaseId });
 
             await _client.CreateDocumentCollectionIfNotExistsAsync(
-                UriFactory.CreateDatabaseUri(_databaseId), 
-                new DocumentCollection { 
+                UriFactory.CreateDatabaseUri(_databaseId),
+                new DocumentCollection
+                {
                     Id = _collectionId,
-                    PartitionKey = new PartitionKeyDefinition() { 
-                        Paths = new Collection<string>(new [] { "/id" })
+                    PartitionKey = new PartitionKeyDefinition()
+                    {
+                        Paths = new Collection<string>(new[] { "/id" })
                     }
                 });
- 
+
             var family1 = JObject.Parse(File.ReadAllText("data/andersen.json"));
             var family2 = JObject.Parse(File.ReadAllText("data/wakefield.json"));
 
@@ -56,36 +58,42 @@ namespace linuxacademy.az203.storage.cosmosdb
             await GetDocumentByIdAsync(
                 _databaseId, _collectionId, "WakefieldFamily");
 
-//Select the AndersenFamily document
-            ExecuteSqlQuery(_databaseId, _collectionId, 
+            //Select the AndersenFamily document
+            ExecuteSqlQuery(_databaseId, _collectionId,
             @"
 SELECT *
 FROM Families f
 WHERE f.id = 'AndersenFamily'
 ");
 
-// Project the family name and city where the address city 
-// and state are the same value
-            ExecuteSqlQuery(_databaseId, _collectionId, 
+            // Project the family name and city where the address city 
+            // and state are the same value
+            ExecuteSqlQuery(_databaseId, _collectionId,
             @"
 SELECT {""Name"":f.id, ""City"":f.address.city} AS Family
     FROM Families f
     WHERE f.address.city = f.address.state
-");  
+");
 
-// Get all children names whose family id matches WakefieldFamily, 
-// and order by city of residence 
-            ExecuteSqlQuery(_databaseId, _collectionId, 
+            // Get all children names whose family id matches WakefieldFamily, 
+            // and order by city of residence 
+            ExecuteSqlQuery(_databaseId, _collectionId,
             @"
 SELECT c.givenName
     FROM Families f
     JOIN c IN f.children
     WHERE f.id = 'WakefieldFamily'
-    ORDER BY f.address.city ASC");  
+    ORDER BY f.address.city ASC");
+
+
+    // Get all children names whose family id matches WakefieldFamily, 
+            // and order by city of residence 
+            ExecuteScalar(_databaseId, _collectionId,
+            @" SELECT VALUE count(c) FROM c ");
         }
 
         private static async Task CreateDocumentIfNotExistsAsync(
-            string databaseId, 
+            string databaseId,
             string collectionId,
             string documentId,
             JObject data)
@@ -95,8 +103,9 @@ SELECT c.givenName
                 await _client.ReadDocumentAsync(
                                 UriFactory.CreateDocumentUri(
                                   databaseId, collectionId, documentId),
-                    new RequestOptions { 
-                        PartitionKey = new PartitionKey(documentId) 
+                    new RequestOptions
+                    {
+                        PartitionKey = new PartitionKey(documentId)
                     });
                 Console.WriteLine(
                     $"Family {documentId} already exists in the database");
@@ -107,7 +116,7 @@ SELECT c.givenName
                 {
                     await _client.CreateDocumentAsync(
                         UriFactory.CreateDocumentCollectionUri(
-                            databaseId, collectionId), 
+                            databaseId, collectionId),
                         data);
                     Console.WriteLine($"Created Family {documentId}");
                 }
@@ -119,15 +128,16 @@ SELECT c.givenName
         }
 
         private static async Task<string> GetDocumentByIdAsync(
-            string databaseId, 
+            string databaseId,
             string collectionId,
             string documentId)
         {
             var response = await _client.ReadDocumentAsync(
                 UriFactory.CreateDocumentUri(
                     databaseId, collectionId, documentId),
-                new RequestOptions { 
-                    PartitionKey = new PartitionKey(documentId) 
+                new RequestOptions
+                {
+                    PartitionKey = new PartitionKey(documentId)
                 }
             );
 
@@ -141,15 +151,40 @@ SELECT c.givenName
         {
             System.Console.WriteLine("SQL: " + sql);
             // Set some common query options
-            var queryOptions = new FeedOptions { 
-                MaxItemCount = -1, 
-                EnableCrossPartitionQuery = true };
+            var queryOptions = new FeedOptions
+            {
+                MaxItemCount = -1,
+                EnableCrossPartitionQuery = true
+            };
 
 
             var sqlQuery = _client.CreateDocumentQuery<JObject>(
                     UriFactory.CreateDocumentCollectionUri(
                         databaseId, collectionId),
-                    sql, queryOptions );
+                    sql, queryOptions);
+
+            foreach (var result in sqlQuery)
+            {
+                Console.WriteLine(result);
+            }
+        }
+
+        private static void ExecuteScalar(
+            string databaseId, string collectionId, string sql)
+        {
+            System.Console.WriteLine("SQL: " + sql);
+            // Set some common query options
+            var queryOptions = new FeedOptions
+            {
+                MaxItemCount = -1,
+                EnableCrossPartitionQuery = true
+            };
+
+
+            var sqlQuery = _client.CreateDocumentQuery<int>(
+                    UriFactory.CreateDocumentCollectionUri(
+                        databaseId, collectionId),
+                    sql, queryOptions);
 
             foreach (var result in sqlQuery)
             {
