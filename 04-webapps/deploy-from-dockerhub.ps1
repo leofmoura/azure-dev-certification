@@ -1,6 +1,6 @@
 $rg = "webapps"
 $planname = "dockerhubdeployasp"
-$appname = "laaz203dockerhubdeploy"
+$appname = "leo203dockerhubdeploy"
 $container = "microsoft/dotnet-samples:aspnetapp"
 
 az group create -n $rg -l westus
